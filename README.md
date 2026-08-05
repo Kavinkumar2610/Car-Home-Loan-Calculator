@@ -4,10 +4,12 @@ A single-file HTML loan calculator for Malaysian **car** and **home** loans. Com
 
 ## Open it
 
-Just open [`https://kavinkumar2610.github.io/Car-Home-Loan-Calculator/`) in any browser. No install, no internet, no dependencies.
+**Live:** <https://kavinkumar2610.github.io/Car-Home-Loan-Calculator/> — just open in any browser. No install, no dependencies.
+
+**Offline:** open [`index.html`](index.html) directly — works with no internet at all.
 
 ```bash
-open car-loan-calculator.html
+open index.html
 ```
 
 ## What it does
