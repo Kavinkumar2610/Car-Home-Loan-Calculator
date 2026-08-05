@@ -1,0 +1,218 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Car & Home Loan Calculator — Reducing Balance (Malaysia)</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    margin: 0; padding: 24px; max-width: 860px; margin-inline: auto;
+    background: Canvas; color: CanvasText;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { opacity: .65; margin: 0 0 20px; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  label { display: block; font-size: 13px; opacity: .8; margin-bottom: 4px; }
+  input {
+    width: 100%; padding: 9px 10px; font-size: 15px; border-radius: 8px;
+    border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+    background: Canvas; color: CanvasText;
+  }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px; }
+  .card { border: 1px solid color-mix(in srgb, CanvasText 15%, transparent); border-radius: 12px; padding: 16px; }
+  .card h2 { font-size: 14px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+  .row { display: flex; justify-content: space-between; padding: 5px 0; font-variant-numeric: tabular-nums; }
+  .row span:last-child { font-weight: 600; }
+  .save { margin-top: 14px; border-radius: 12px; padding: 18px;
+    background: color-mix(in srgb, seagreen 18%, Canvas); border: 1px solid seagreen; }
+  .save h2 { margin: 0 0 10px; font-size: 15px; }
+  .big { font-size: 26px; font-weight: 700; color: seagreen; }
+  details { margin-top: 20px; }
+  summary {
+    list-style: none; cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px; border-radius: 10px; font-weight: 600;
+    border: 1px solid SteelBlue; color: SteelBlue;
+    background: color-mix(in srgb, SteelBlue 10%, Canvas);
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: ""; width: 0; height: 0; flex: none;
+    border-left: 11px solid currentColor;
+    border-top: 7px solid transparent; border-bottom: 7px solid transparent;
+    transition: transform .15s;
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  summary:hover { background: color-mix(in srgb, SteelBlue 18%, Canvas); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 10px; }
+  th, td { text-align: right; padding: 5px 8px; border-bottom: 1px solid color-mix(in srgb, CanvasText 10%, transparent); }
+  th:first-child, td:first-child { text-align: left; }
+  .warn { color: crimson; font-size: 13px; margin-top: 8px; }
+  .toggle { display: inline-flex; border: 1px solid color-mix(in srgb, CanvasText 25%, transparent); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+  .toggle button { border: 0; padding: 9px 22px; font: inherit; cursor: pointer; background: Canvas; color: CanvasText; }
+  .toggle button[aria-pressed="true"] { background: SteelBlue; color: white; }
+</style>
+
+<h1>🇲🇾 Car &amp; Home Loan Calculator</h1>
+<p class="sub" id="sub"></p>
+
+<div class="toggle" role="group" aria-label="Loan type">
+  <button id="t_car" aria-pressed="true">Car · Reducing</button>
+  <button id="t_carflat" aria-pressed="false">Car · Flat Rate</button>
+  <button id="t_home" aria-pressed="false">Home</button>
+</div>
+
+<div class="grid">
+  <div><label>Loan amount (RM)</label><input id="amount" type="number" value="80000" min="0" step="1000"></div>
+  <div><label>Annual interest rate (%)</label><input id="rate" type="number" value="3.5" min="0" step="0.1"></div>
+  <div><label>Tenure (years)</label><input id="years" type="number" value="7" min="1" step="1"></div>
+  <div><label>Extra payment per month (RM)</label><input id="extra" type="number" value="200" min="0" step="50"></div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <h2>Normal</h2>
+    <div class="row"><span>Monthly payment</span><span id="n_pay"></span></div>
+    <div class="row"><span>Tenure</span><span id="n_time"></span></div>
+    <div class="row"><span>Total interest</span><span id="n_int"></span></div>
+    <div class="row"><span>Total paid</span><span id="n_total"></span></div>
+  </div>
+  <div class="card">
+    <h2>With Extra</h2>
+    <div class="row"><span>Monthly payment</span><span id="e_pay"></span></div>
+    <div class="row"><span>Tenure</span><span id="e_time"></span></div>
+    <div class="row"><span>Total interest</span><span id="e_int"></span></div>
+    <div class="row"><span>Total paid</span><span id="e_total"></span></div>
+  </div>
+</div>
+
+<div class="save">
+  <h2>You save</h2>
+  <div class="row"><span>Interest saved</span><span class="big" id="s_int"></span></div>
+  <div class="row"><span>Time saved</span><span class="big" id="s_time"></span></div>
+</div>
+<p class="warn" id="warn"></p>
+<p class="sub" id="flatnote" style="margin-top:10px"></p>
+
+<details>
+  <summary>Year-by-year balance comparison</summary>
+  <table><thead><tr><th>Year</th><th>Normal balance</th><th>With extra balance</th></tr></thead>
+  <tbody id="tbody"></tbody></table>
+</details>
+
+<script>
+const $ = id => document.getElementById(id);
+const rm = n => "RM " + n.toLocaleString("en-MY", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const dur = m => m <= 0 ? "0 months" : `${Math.floor(m/12)}y ${m%12}m`;
+
+// Amortise a loan. Returns {months, totalInterest, yearEndBalances[]}.
+// Fixed monthly payment `pay`; each month interest accrues on the balance,
+// the rest (plus optional extra) reduces principal.
+function amortise(principal, monthlyRate, pay, extra = 0) {
+  let bal = principal, months = 0, interest = 0;
+  const yearEnd = [];
+  while (bal > 0.005 && months < 1200) {
+    const i = bal * monthlyRate;
+    let principalPaid = pay + extra - i;
+    if (principalPaid <= 0) return null; // payment can't cover interest -> never repays
+    if (principalPaid > bal) principalPaid = bal;
+    bal -= principalPaid; interest += i; months++;
+    if (months % 12 === 0) yearEnd.push(bal);
+  }
+  if (bal > 0.005) yearEnd.push(bal);
+  return { months, totalInterest: interest, yearEnd };
+}
+
+// Flat-rate hire purchase (how MY banks quote car loans): interest is computed
+// once on the full principal and fixed, so extra monthly payments save nothing.
+function calcFlat(P, annual, n) {
+  const totalInt = P * (annual / 100) * (n / 12);
+  const inst = (P + totalInt) / n;
+  for (const p of ["n", "e"]) {
+    $(p + "_pay").textContent = rm(inst);
+    $(p + "_time").textContent = dur(n);
+    $(p + "_int").textContent = rm(totalInt);
+    $(p + "_total").textContent = rm(P + totalInt);
+  }
+  $("s_int").textContent = rm(0);
+  $("s_time").textContent = dur(0);
+  $("flatnote").textContent =
+    `Flat-rate interest is charged once on the full RM${P.toLocaleString("en-MY")} and fixed for the whole tenure — ` +
+    `the installment and total interest never change, so paying extra each month saves nothing. ` +
+    `The only way to save is early settlement, where the bank rebates unearned interest via the Rule of 78 (shown below).`;
+  // Year-by-year Rule-of-78 settlement: what you'd pay to close the loan at each year-end.
+  const yrs = Math.ceil(n / 12);
+  $("tbody").innerHTML = Array.from({length: yrs}, (_, y) => {
+    const k = Math.min(12 * (y + 1), n), m = n - k;
+    const settle = m * inst - totalInt * m * (m + 1) / (n * (n + 1));
+    return `<tr><td>${y + 1}</td><td>${rm(settle)}</td><td>—</td></tr>`;
+  }).join("");
+}
+
+function calc() {
+  const P = +$("amount").value, annual = +$("rate").value;
+  let years = +$("years").value;
+  const extra = +$("extra").value || 0;
+  $("warn").textContent = ""; $("flatnote").textContent = "";
+  if (years > maxYears) { years = maxYears; $("warn").textContent = `Max tenure capped at ${maxYears} years.`; }
+  const n = Math.round(years * 12);
+  if (!(P > 0) || !(n > 0)) return;
+
+  if (method === "flat") return calcFlat(P, annual, n);
+
+  const r = annual / 100 / 12;
+  // Standard reducing-balance monthly payment. r=0 => straight division.
+  const pay = r === 0 ? P / n : P * r / (1 - Math.pow(1 + r, -n));
+
+  const normal = amortise(P, r, pay, 0);
+  const withEx = amortise(P, r, pay, extra) || normal;
+
+  $("n_pay").textContent = rm(pay);
+  $("n_time").textContent = dur(normal.months);
+  $("n_int").textContent = rm(normal.totalInterest);
+  $("n_total").textContent = rm(P + normal.totalInterest);
+
+  $("e_pay").textContent = rm(pay + extra);
+  $("e_time").textContent = dur(withEx.months);
+  $("e_int").textContent = rm(withEx.totalInterest);
+  $("e_total").textContent = rm(P + withEx.totalInterest);
+
+  $("s_int").textContent = rm(normal.totalInterest - withEx.totalInterest);
+  $("s_time").textContent = dur(normal.months - withEx.months);
+
+  const yrs = Math.ceil(normal.months / 12);
+  $("tbody").innerHTML = Array.from({length: yrs}, (_, y) => {
+    const nb = normal.yearEnd[y] ?? 0, eb = withEx.yearEnd[y] ?? 0;
+    return `<tr><td>${y+1}</td><td>${rm(nb)}</td><td>${eb > 0 ? rm(eb) : "Paid off"}</td></tr>`;
+  }).join("");
+}
+
+const PRESETS = {
+  car:     { amount: 80000,  rate: 3.5, years: 9,  extra: 200, method: "reducing", maxYears: 9 },
+  carflat: { amount: 80000,  rate: 2.9, years: 9,  extra: 200, method: "flat",     maxYears: 9 },
+  home:    { amount: 400000, rate: 4.0, years: 35, extra: 500, method: "reducing", maxYears: 35 },
+};
+let method = "reducing", maxYears = 9;
+function setType(type) {
+  const p = PRESETS[type];
+  method = p.method; maxYears = p.maxYears;
+  $("amount").value = p.amount; $("rate").value = p.rate;
+  $("years").value = p.years;   $("extra").value = p.extra;
+  $("years").max = maxYears;
+  for (const [id, key] of [["t_car","car"],["t_carflat","carflat"],["t_home","home"]])
+    $(id).setAttribute("aria-pressed", type === key);
+  $("sub").textContent = method === "flat"
+    ? "Flat-rate hire purchase (how banks quote car loans). Interest is fixed upfront on the original amount."
+    : "Reducing balance (amortised). Extra payments cut both interest and tenure.";
+  calc();
+}
+$("t_car").onclick = () => setType("car");
+$("t_carflat").onclick = () => setType("carflat");
+$("t_home").onclick = () => setType("home");
+
+document.querySelectorAll("input").forEach(el => el.addEventListener("input", calc));
+setType("car");
+
+// ponytail: self-check — 100k @ 5% over 60mo amortises to ~RM1887.12/mo.
+console.assert(Math.abs((100000 * (0.05/12) / (1 - Math.pow(1 + 0.05/12, -60))) - 1887.12) < 0.5, "payment formula drifted");
+</script>
